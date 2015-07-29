@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 import sys
 
 from aqt import mw
@@ -23,7 +24,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.fileobj = open(fcd_filename, "r") # FIXME
         self.delimiter = "\t"
         self.tagsToAdd = ["FCD"]
-        self.numFields = 2
+        self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
 
     def foreignNotes(self):
         pp.pprint("START") # DELETE
@@ -49,10 +50,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
 
-                tags = []
-                _appendIfNotEmpty(tags, row["Category 1"])
-                _appendIfNotEmpty(tags, row["Category 2"])
-                self.tagsToAdd = tags
+                _appendIfNotEmpty(self.tagsToAdd, row["Category 1"])
+                _appendIfNotEmpty(self.tagsToAdd, row["Category 2"])
 
                 stats_string = row["Statistics 1"]
                 stats = Statistics.parse(stats_string)
@@ -68,7 +67,6 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.log = log
         self.ignored = ignored
         self.fileobj.close()
-        self.initMapping()
         pp.pprint(notes)
         pp.pprint("END") # DELETE
         return notes
@@ -79,8 +77,9 @@ class FlashcardsDeluxeImporter(NoteImporter):
         return self.numFields
 
     def noteFromFields(self, front, back, stats):
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # FIXME
         note = ForeignNote()
-        note.fields.extend([front, back])
+        note.fields.extend([timestamp, front, back, ""])
         note.tags.extend(self.tagsToAdd)
         return note
 
@@ -98,6 +97,7 @@ ForeignNote.__repr__ = _variables
 
 def importFlashcardsDeluxe():
     # set current deck ("did" = deck ID)
+    # FIXME: it's still using the default deck, why?
     did = mw.col.decks.id("TEST")
     mw.col.decks.select(did)
 
