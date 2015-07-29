@@ -26,7 +26,6 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
 
     def foreignNotes(self):
-        pp.pprint("START") # DELETE
         self.open()
 
         # process all lines
@@ -57,7 +56,6 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
                 note = self.noteFromFields(front, back, stats)
                 notes.append(note)
-                pp.pprint("BOTTOM INSIDE OF TRY") # DELETE
         except (csv.Error), e:
             pp.pprint("ERROR") # DELETE
             log.append(_("Aborted: %s") % str(e))
@@ -109,7 +107,6 @@ def importFlashcardsDeluxe():
     # import into the collection
     fcd_file = open(fcd_filename, "r") # FIXME
     importer = FlashcardsDeluxeImporter(mw.col, fcd_file) # FIXME
-    pp.pprint(importer)
     importer.initMapping()
     importer.run()
 
