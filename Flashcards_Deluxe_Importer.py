@@ -26,6 +26,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.numFields = 2
 
     def foreignNotes(self):
+        pp.pprint("START") # DELETE
         self.open()
 
         # process all lines
@@ -58,16 +59,18 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
                 note = self.noteFromFields(front, back, stats)
                 notes.append(note)
-
-                pp.pprint(note)
-                pp.pprint(stats)
+                pp.pprint("BOTTOM INSIDE OF TRY") # DELETE
         except (csv.Error), e:
+            pp.pprint("ERROR") # DELETE
             log.append(_("Aborted: %s") % str(e))
 
+        pp.pprint("OUTSIDE TRY") # DELETE
         self.log = log
         self.ignored = ignored
         self.fileobj.close()
         self.initMapping()
+        pp.pprint(notes)
+        pp.pprint("END") # DELETE
         return notes
 
     def fields(self):
@@ -95,18 +98,12 @@ ForeignNote.__repr__ = _variables
 
 def importFlashcardsDeluxe():
     # set current deck ("did" = deck ID)
-    pp.pprint(mw)
-    pp.pprint(mw.col)
-    pp.pprint(mw.col.decks)
     did = mw.col.decks.id("TEST")
-    pp.pprint(did)
     mw.col.decks.select(did)
 
     # set note type for deck ("mid" = model aka note ID)
     m = mw.col.models.byName("Basic (and reversed card)")
-    pp.pprint(m)
     deck = mw.col.decks.get(did)
-    pp.pprint(deck)
     deck["mid"] = m["id"]
     mw.col.decks.save(deck)
 
