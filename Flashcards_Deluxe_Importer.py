@@ -27,19 +27,23 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
     def foreignNotes(self):
         self.open()
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # process all lines
+        notes = []
         log = []
         ignored = 0
+        lineNum = 0
 
         # skip first 10 lines (does this vary or is it constant?)
         for _ in range(10):
             self.file.next()
 
-        notes = []
         reader = csv.DictReader(self.file, delimiter="\t", doublequote=True)
         try:
             for row in reader:
+                lineNum += 1
+
                 #row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
                 front = row["Text 1"]
                 back = row["Text 2"]
@@ -54,7 +58,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 stats_string = row["Statistics 1"]
                 stats = Statistics.parse(stats_string)
 
-                note = self.noteFromFields(front, back, stats)
+                id = "Note #{0} imported at {1}".format(lineNum, now)
+                note = self.noteFromFields(id, front, back, stats)
                 notes.append(note)
         except (csv.Error), e:
             pp.pprint("ERROR") # DELETE
@@ -73,10 +78,9 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.open()
         return self.numFields
 
-    def noteFromFields(self, front, back, stats):
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # FIXME
+    def noteFromFields(self, id, front, back, stats):
         note = ForeignNote()
-        note.fields.extend([timestamp, front, back, ""])
+        note.fields.extend([id, front, back, ""])
         note.tags.extend(self.tagsToAdd)
         return note
 
