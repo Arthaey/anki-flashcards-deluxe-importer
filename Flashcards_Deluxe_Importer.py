@@ -84,6 +84,21 @@ class FlashcardsDeluxeImporter(NoteImporter):
         note.tags.extend(self.tagsToAdd)
         return note
 
+    def newData(self, n):
+        # [id, guid64(), self.model['id'],
+        #  intTime(), self.col.usn(), self.col.tags.join(n.tags),
+        #  n.fieldsStr, "", "", 0, ""]
+        superData = NoteImporter.newData(self, n)
+
+        id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d = superData
+        fields = fieldsStr.split("\x1f")
+        noteId, front, back, citation = fields
+
+        noteId = str(id) # change to the actual note ID, now that it's assigned
+        fieldsStr = "\x1f".join([noteId, front, back, citation])
+
+        return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
+
 def _appendIfNotEmpty(arr, item):
     if item and item.strip():
         arr.append(item)
