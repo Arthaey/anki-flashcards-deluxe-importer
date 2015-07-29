@@ -21,7 +21,6 @@ class FlashcardsDeluxeImporter(NoteImporter):
     def __init__(self, *args):
         NoteImporter.__init__(self, *args)
         self.lines = None
-        self.fileobj = open(fcd_filename, "r") # FIXME
         self.delimiter = "\t"
         self.tagsToAdd = ["FCD"]
         self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
@@ -36,10 +35,10 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
         # skip first 10 lines (does this vary or is it constant?)
         for _ in range(10):
-            self.fileobj.next()
+            self.file.next()
 
         notes = []
-        reader = csv.DictReader(self.fileobj, delimiter="\t", doublequote=True)
+        reader = csv.DictReader(self.file, delimiter="\t", doublequote=True)
         try:
             for row in reader:
                 #row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
@@ -66,7 +65,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         pp.pprint("OUTSIDE TRY") # DELETE
         self.log = log
         self.ignored = ignored
-        self.fileobj.close()
+        self.file.close()
         pp.pprint(notes)
         pp.pprint("END") # DELETE
         return notes
