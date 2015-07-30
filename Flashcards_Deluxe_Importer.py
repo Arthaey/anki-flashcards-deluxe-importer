@@ -51,7 +51,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 lineNum += 1
                 id = "Note #{0} imported at {1}".format(lineNum, now)
 
-                #row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
+                row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
                 front = row["Text 1"]
                 back = row["Text 2"]
                 hint = row["Text 3"]
