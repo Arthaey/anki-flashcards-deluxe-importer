@@ -1,8 +1,8 @@
 # TODO:
 # - allow HTML
 # - turn <u>foo</u> into clozes
-# - prompt user for exported FCD deck file
-# - add cards to currently selected deck
+# - prompt user for exported FCD file
+# - prompt user for which deck to use
 # - dynamically determine the number of fields for the model
 # - check whether the Note Id addon is actually in use
 
@@ -119,13 +119,14 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
     def updateCards(self):
         sched = mw.col.sched
+        did = mw.col.decks.id("TEST") # FIXME
         suspendIds = []
 
-        # TODO: handle FCD card status
         # FIXME: Use ForeignCard instead?
         for nid in self.newNoteIds:
             stats = self.cardStats[nid]
             note = mw.col.getNote(nid)
+            note.did = did
 
             # Use the same statistics for both directions.
             for card in note.cards():
@@ -134,6 +135,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 card.factor = random.randint(1500,2500)
                 card.reps = stats.reviewCount
                 card.lapses = stats.lapses
+                card.did = did
 
                 suspendIds += self.checkLeech(card, sched._lapseConf(card))
 
@@ -153,6 +155,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 elif stats.excluded: # suspended
                     suspendIds += [card.id]
 
+                card.flush()
                 self._cards.append((nid, card.ord, card))
 
         NoteImporter.updateCards(self)
@@ -183,17 +186,6 @@ Statistics.__repr__ = _variables
 ForeignNote.__repr__ = _variables
 
 def importFlashcardsDeluxe():
-    # set current deck ("did" = deck ID)
-    # FIXME: it's still using the default deck, why?
-    did = mw.col.decks.id("TEST")
-    mw.col.decks.select(did)
-
-    # set note type for deck ("mid" = model aka note ID)
-    m = mw.col.models.byName("Basic (and reversed card)")
-    deck = mw.col.decks.get(did)
-    deck["mid"] = m["id"]
-    mw.col.decks.save(deck)
-
     # import into the collection (with whichever is the current deck)
     fcdFile = open(fcdFilename, "r")
     importer = FlashcardsDeluxeImporter(mw.col, fcdFile)
