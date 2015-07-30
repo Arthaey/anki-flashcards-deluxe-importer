@@ -1,7 +1,10 @@
+# vim: set fileencoding=utf-8 :
+
 # TODO:
 # - allow HTML
 # - prompt user for exported FCD file
 # - prompt user for which deck to use
+# - prompt user for tag mapping
 # - dynamically determine the number of fields for the model
 # - check whether the Note Id addon is actually in use
 
@@ -11,6 +14,9 @@ import random
 import re
 import sys
 
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 from anki.hooks import runHook
 from anki.importing.noteimp import NoteImporter, ForeignNote
 from aqt import mw
@@ -18,13 +24,18 @@ from aqt.qt import *
 from aqt.utils import showInfo
 
 from flashcards_deluxe_importer.statistics import Statistics
-from flashcards_deluxe_importer.util import appendIfNotEmpty
 
 import pprint # DELETE
 pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
 fcdFilename = os.path.expanduser("~") + "/FCD-Miscellaneous.txt" # FIXME
 
 SECONDS_PER_DAY = 60*60*24
+
+RENAME_TAGS = {
+    "phrases": "español::frases",
+    "sentences": "español::oraciones",
+    "vocabulary": "español::vocabulario",
+}
 
 class FlashcardsDeluxeImporter(NoteImporter):
 
@@ -82,8 +93,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
 
-                appendIfNotEmpty(self.tagsToAdd, row["Category 1"])
-                appendIfNotEmpty(self.tagsToAdd, row["Category 2"])
+                self.addTag(row["Category 1"])
+                self.addTag(row["Category 2"])
 
                 statsString = row["Statistics 1"]
                 stats = Statistics.parse(statsString)
@@ -101,6 +112,11 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.ignored = ignored
         self.file.close()
         return notes
+
+    def addTag(self, tag):
+        if tag and tag.strip():
+            tag = RENAME_TAGS.get(tag.lower(), tag.lower())
+            self.tagsToAdd.append(tag)
 
     def fields(self):
         "Number of fields."
