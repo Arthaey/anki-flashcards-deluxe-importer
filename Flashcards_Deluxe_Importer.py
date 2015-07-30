@@ -76,6 +76,9 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 self.cardStats[id] = stats
 
                 note = self.noteFromFields(id, front, back)
+                if stats.flagged:
+                    note.tags.append("marked")
+
                 notes.append(note)
         except (csv.Error), e:
             log.append(_("Aborted: %s") % str(e))
