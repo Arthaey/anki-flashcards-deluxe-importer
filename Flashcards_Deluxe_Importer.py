@@ -8,6 +8,7 @@
 import csv
 from datetime import datetime
 import random
+import re
 import sys
 
 from anki.hooks import runHook
@@ -134,6 +135,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
     def updateCards(self):
         sched = mw.col.sched
         suspendIds = []
+        clozeRegex = re.compile(r"&lt;u&gt;(.+?)&lt;/u&gt;",
+                re.IGNORECASE | re.UNICODE | re.MULTILINE)
 
         # FIXME: Use ForeignCard instead?
         for nid in self.newNoteIds:
@@ -143,6 +146,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
             if "&lt;/u&gt;" in note["Back"] or "&lt;/b&gt;" in note["Back"]:
                 self.clozeNoteIds.append(nid)
+                note["Back"] = re.sub(clozeRegex, r"{{c1::\1}}", note["Back"])
+                note.flush()
 
             # Use the same statistics for both directions.
             for card in note.cards():
