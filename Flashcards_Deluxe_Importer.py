@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+import random
 import sys
 
 from aqt import mw
@@ -14,6 +15,8 @@ import pprint # DELETE
 pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
 fcd_filename = os.path.expanduser("~") + "/FCD-Miscellaneous.txt" # FIXME
 
+SECONDS_PER_DAY = 60*60*24
+
 class FlashcardsDeluxeImporter(NoteImporter):
 
     needDelimiter = True
@@ -24,10 +27,13 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.delimiter = "\t"
         self.tagsToAdd = ["FCD"]
         self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
+        self.cardStats = {}
+        self.newNoteIds = []
+        self.startedAt = datetime.now()
 
     def foreignNotes(self):
         self.open()
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        now = self.startedAt.strftime('%Y-%m-%d %H:%M:%S')
 
         # process all lines
         notes = []
@@ -43,6 +49,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         try:
             for row in reader:
                 lineNum += 1
+                id = "Note #{0} imported at {1}".format(lineNum, now)
 
                 #row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
                 front = row["Text 1"]
@@ -57,20 +64,16 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
                 stats_string = row["Statistics 1"]
                 stats = Statistics.parse(stats_string)
+                self.cardStats[id] = stats
 
-                id = "Note #{0} imported at {1}".format(lineNum, now)
-                note = self.noteFromFields(id, front, back, stats)
+                note = self.noteFromFields(id, front, back)
                 notes.append(note)
         except (csv.Error), e:
-            pp.pprint("ERROR") # DELETE
             log.append(_("Aborted: %s") % str(e))
 
-        pp.pprint("OUTSIDE TRY") # DELETE
         self.log = log
         self.ignored = ignored
         self.file.close()
-        pp.pprint(notes)
-        pp.pprint("END") # DELETE
         return notes
 
     def fields(self):
@@ -78,7 +81,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.open()
         return self.numFields
 
-    def noteFromFields(self, id, front, back, stats):
+    def noteFromFields(self, id, front, back):
         note = ForeignNote()
         note.fields.extend([id, front, back, ""])
         note.tags.extend(self.tagsToAdd)
@@ -94,14 +97,37 @@ class FlashcardsDeluxeImporter(NoteImporter):
         fields = fieldsStr.split("\x1f")
         noteId, front, back, citation = fields
 
+        self.cardStats[id] = self.cardStats[noteId]
+        del self.cardStats[noteId]
+
+        self.newNoteIds.append(id)
         noteId = str(id) # change to the actual note ID, now that it's assigned
         fieldsStr = "\x1f".join([noteId, front, back, citation])
 
         return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
 
-def _appendIfNotEmpty(arr, item):
-    if item and item.strip():
-        arr.append(item)
+    def updateCards(self):
+        for nid in self.newNoteIds:
+            # Use the same statistics for both directions.
+            stats = self.cardStats[nid]
+            dueInDays = (stats.dueDate - self.startedAt).days
+            intervalInDays = stats.srsIntervalHours / 24;
+
+            # TODO: handle FCD card status
+            # FIXME: Use ForeignCard instead?
+            for card in mw.col.getNote(nid).cards():
+                card.ivl = intervalInDays
+                card.due = dueInDays
+                card.factor = random.randint(1500,2500)
+                card.reps = stats.reviewCount
+                card.lapses = stats.reviewCount - stats.correctCount
+                self._cards.append((nid, card.ord, card))
+
+        NoteImporter.updateCards(self)
+
+def _appendIfNotEmpty(arr, text):
+    if text and text.strip():
+        arr.append(text.lower())
 
 def _variables(self):
     x = ["{}:{}".format(k,v) for k,v in sorted(self.__dict__.iteritems())]
