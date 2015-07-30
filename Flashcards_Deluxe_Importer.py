@@ -135,18 +135,21 @@ class FlashcardsDeluxeImporter(NoteImporter):
     def updateCards(self):
         sched = mw.col.sched
         suspendIds = []
-        clozeRegex = re.compile(r"&lt;u&gt;(.+?)&lt;/u&gt;",
-                re.IGNORECASE | re.UNICODE | re.MULTILINE)
 
-        # FIXME: Use ForeignCard instead?
         for nid in self.newNoteIds:
             note = mw.col.getNote(nid)
             note.did = self.deckId
             stats = self.cardStats[nid]
 
-            if "&lt;/u&gt;" in note["Back"] or "&lt;/b&gt;" in note["Back"]:
+            # horrible ugly hack but works "well enough" :(
+            back = note["Back"]
+            if "&lt;/u&gt;" in note["Back"]:
                 self.clozeNoteIds.append(nid)
-                note["Back"] = re.sub(clozeRegex, r"{{c1::\1}}", note["Back"])
+                note["Back"] = re.sub(r"&lt;u.*?&gt;(.+?)&lt;/u&gt;", r"{{c1::\1}}", back)
+                note.flush()
+            elif "&lt;/b&gt;" in note["Back"]:
+                self.clozeNoteIds.append(nid)
+                note["Back"] = re.sub(r"&lt;b.*?&gt;(.+?)&lt;/b&gt;", r"{{c1::\1}}", back)
                 note.flush()
 
             # Use the same statistics for both directions.
