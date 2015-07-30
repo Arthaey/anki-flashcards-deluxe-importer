@@ -150,6 +150,8 @@ def importFlashcardsDeluxe():
     importer = FlashcardsDeluxeImporter(mw.col, fcd_file) # FIXME
     importer.initMapping()
     importer.run()
+    showInfo("Finished importing {0} notes from {1}".format(
+        len(importer.newNoteIds), fcd_filename))
 
 action = QAction("Import from Flashcards Deluxe", mw)
 mw.connect(action, SIGNAL("triggered()"), importFlashcardsDeluxe)
