@@ -1,6 +1,5 @@
 # TODO:
 # - allow HTML
-# - turn <u>foo</u> into clozes
 # - prompt user for exported FCD file
 # - prompt user for which deck to use
 # - dynamically determine the number of fields for the model
@@ -36,9 +35,23 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.delimiter = "\t"
         self.tagsToAdd = ["FCD"]
         self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
+
+        # specific to FlashcardsDeluxeImporter
         self.cardStats = {}
-        self.newNoteIds = []
         self.startedAt = datetime.now()
+        self.newNoteIds = []
+        self.clozeNoteIds = []
+        self.deckId = mw.col.decks.id("TEST")
+
+    def importNotes(self, notes):
+        NoteImporter.importNotes(self, notes)
+
+        mm = mw.col.models
+        basicReversedModel = mm.byName("Basic (and reversed card)")
+        clozeModel = mm.byName("Cloze")
+        fmap = {0: 0, 1: 2, 2: 1, 3: 3}
+        cmap = {0: None, 1: 0}
+        mm.change(basicReversedModel, self.clozeNoteIds, clozeModel, fmap, cmap)
 
     def foreignNotes(self):
         self.open()
@@ -120,14 +133,16 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
     def updateCards(self):
         sched = mw.col.sched
-        did = mw.col.decks.id("TEST") # FIXME
         suspendIds = []
 
         # FIXME: Use ForeignCard instead?
         for nid in self.newNoteIds:
-            stats = self.cardStats[nid]
             note = mw.col.getNote(nid)
-            note.did = did
+            note.did = self.deckId
+            stats = self.cardStats[nid]
+
+            if "&lt;/u&gt;" in note["Back"] or "&lt;/b&gt;" in note["Back"]:
+                self.clozeNoteIds.append(nid)
 
             # Use the same statistics for both directions.
             for card in note.cards():
@@ -136,7 +151,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 card.factor = random.randint(1500,2500)
                 card.reps = stats.reviewCount
                 card.lapses = stats.lapses
-                card.did = did
+                card.did = self.deckId
 
                 suspendIds += self._checkLeech(card, sched._lapseConf(card))
 
