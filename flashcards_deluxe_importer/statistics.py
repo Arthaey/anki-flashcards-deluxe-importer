@@ -13,6 +13,15 @@ class Statistics(object):
         self.lastReview = datetime.strptime(lastReview, "%Y-%m-%d %H:%M")
         self.dueDate = datetime.strptime(dueDate, "%Y-%m-%d %H:%M")
 
+    def intervalInDays(self):
+        return self.srsIntervalHours / 24
+
+    def dueInDays(self, startedAt):
+        return (self.dueDate - startedAt).days
+
+    def lapses(self):
+        return self.reviewCount - self.correctCount
+
     @classmethod
     def parse(cls, unparsed_string):
         return cls(*unparsed_string.split(","))

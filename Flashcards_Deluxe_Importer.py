@@ -107,22 +107,18 @@ class FlashcardsDeluxeImporter(NoteImporter):
         return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
 
     def updateCards(self):
+        # TODO: handle FCD card status
+        # FIXME: Use ForeignCard instead?
+        # Use the same statistics for both directions.
         for nid in self.newNoteIds:
-            # Use the same statistics for both directions.
             stats = self.cardStats[nid]
-            dueInDays = (stats.dueDate - self.startedAt).days
-            intervalInDays = stats.srsIntervalHours / 24;
-
-            # TODO: handle FCD card status
-            # FIXME: Use ForeignCard instead?
             for card in mw.col.getNote(nid).cards():
-                card.ivl = intervalInDays
-                card.due = dueInDays
+                card.ivl = stats.intervalInDays()
+                card.due = stats.dueInDays(self.startedAt)
                 card.factor = random.randint(1500,2500)
                 card.reps = stats.reviewCount
-                card.lapses = stats.reviewCount - stats.correctCount
+                card.lapses = stats.lapses()
                 self._cards.append((nid, card.ord, card))
-
         NoteImporter.updateCards(self)
 
 def _appendIfNotEmpty(arr, text):
