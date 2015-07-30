@@ -23,5 +23,5 @@ class Statistics(object):
         return self.reviewCount - self.correctCount
 
     @classmethod
-    def parse(cls, unparsed_string):
-        return cls(*unparsed_string.split(","))
+    def parse(cls, unparsedString):
+        return cls(*unparsedString.split(","))

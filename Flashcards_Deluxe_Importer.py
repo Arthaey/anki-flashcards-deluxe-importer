@@ -13,7 +13,7 @@ from flashcards_deluxe_importer.statistics import Statistics
 
 import pprint # DELETE
 pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
-fcd_filename = os.path.expanduser("~") + "/FCD-Miscellaneous.txt" # FIXME
+fcdFilename = os.path.expanduser("~") + "/FCD-Miscellaneous.txt" # FIXME
 
 SECONDS_PER_DAY = 60*60*24
 
@@ -62,8 +62,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 _appendIfNotEmpty(self.tagsToAdd, row["Category 1"])
                 _appendIfNotEmpty(self.tagsToAdd, row["Category 2"])
 
-                stats_string = row["Statistics 1"]
-                stats = Statistics.parse(stats_string)
+                statsString = row["Statistics 1"]
+                stats = Statistics.parse(statsString)
                 self.cardStats[id] = stats
 
                 note = self.noteFromFields(id, front, back)
@@ -136,22 +136,22 @@ ForeignNote.__repr__ = _variables
 def importFlashcardsDeluxe():
     # set current deck ("did" = deck ID)
     # FIXME: it's still using the default deck, why?
-    did = mw.col.decks.id("TEST")
-    mw.col.decks.select(did)
+    #did = mw.col.decks.id("TEST")
+    #mw.col.decks.select(did)
 
     # set note type for deck ("mid" = model aka note ID)
-    m = mw.col.models.byName("Basic (and reversed card)")
-    deck = mw.col.decks.get(did)
-    deck["mid"] = m["id"]
-    mw.col.decks.save(deck)
+    #m = mw.col.models.byName("Basic (and reversed card)")
+    #deck = mw.col.decks.get(did)
+    #deck["mid"] = m["id"]
+    #mw.col.decks.save(deck)
 
-    # import into the collection
-    fcd_file = open(fcd_filename, "r") # FIXME
-    importer = FlashcardsDeluxeImporter(mw.col, fcd_file) # FIXME
+    # import into the collection (with whichever is the current deck)
+    fcdFile = open(fcdFilename, "r") # FIXME
+    importer = FlashcardsDeluxeImporter(mw.col, fcdFile) # FIXME
     importer.initMapping()
     importer.run()
     showInfo("Finished importing {0} notes from {1}".format(
-        len(importer.newNoteIds), fcd_filename))
+        len(importer.newNoteIds), fcdFilename))
 
 action = QAction("Import from Flashcards Deluxe", mw)
 mw.connect(action, SIGNAL("triggered()"), importFlashcardsDeluxe)
