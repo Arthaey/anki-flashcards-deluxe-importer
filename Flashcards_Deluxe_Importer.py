@@ -1,5 +1,4 @@
 # TODO:
-# - handle FCD card status
 # - allow HTML
 # - turn <u>foo</u> into clozes
 # - prompt user for exported FCD deck file
@@ -119,6 +118,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
 
     def updateCards(self):
+        sched = mw.col.sched
         suspendIds = []
 
         # TODO: handle FCD card status
@@ -129,22 +129,37 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
             # Use the same statistics for both directions.
             for card in note.cards():
-                card.ivl = stats.intervalInDays()
+                card.ivl = stats.intervalInDays
                 card.due = stats.dueInDays(self.startedAt)
                 card.factor = random.randint(1500,2500)
                 card.reps = stats.reviewCount
-                card.lapses = stats.lapses()
+                card.lapses = stats.lapses
 
-                suspendIds += self.checkLeech(card)
+                suspendIds += self.checkLeech(card, sched._lapseConf(card))
+
+                # queue types: 0=new/cram, 1=lrn, 2=rev, 3=day lrn, -1=suspended, -2=buried
+                # revlog types: 0=lrn, 1=rev, 2=relrn, 3=cram
+                # FIXME: Cards aren't going to the new or learning queues. Why?
+                if stats.pending: # new
+                    card.type = 0
+                    card.queue = 0
+                    card.due = card.id
+                elif stats.new: # learning
+                    card.type = 1
+                    card.queue = 1
+                elif stats.active: # graduated
+                    card.type = 2
+                    card.queue = 2
+                elif stats.excluded: # suspended
+                    suspendIds += [card.id]
 
                 self._cards.append((nid, card.ord, card))
 
         NoteImporter.updateCards(self)
-        mw.col.sched.suspendCards(suspendIds)
+        sched.suspendCards(suspendIds)
 
-    def checkLeech(self, card):
+    def checkLeech(self, card, lapseConf):
         suspendIds = []
-        lapseConf = mw.col.sched._lapseConf(card)
         lf = lapseConf["leechFails"]
         if card.lapses >= lf:
             note = card.note()
