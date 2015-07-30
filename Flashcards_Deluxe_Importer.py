@@ -119,13 +119,15 @@ class FlashcardsDeluxeImporter(NoteImporter):
         return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
 
     def updateCards(self):
+        suspendIds = []
+
         # TODO: handle FCD card status
         # FIXME: Use ForeignCard instead?
-        # Use the same statistics for both directions.
         for nid in self.newNoteIds:
             stats = self.cardStats[nid]
             note = mw.col.getNote(nid)
 
+            # Use the same statistics for both directions.
             for card in note.cards():
                 card.ivl = stats.intervalInDays()
                 card.due = stats.dueInDays(self.startedAt)
@@ -133,13 +135,15 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 card.reps = stats.reviewCount
                 card.lapses = stats.lapses()
 
-                self.checkLeech(card)
+                suspendIds += self.checkLeech(card)
 
                 self._cards.append((nid, card.ord, card))
 
         NoteImporter.updateCards(self)
+        mw.col.sched.suspendCards(suspendIds)
 
     def checkLeech(self, card):
+        suspendIds = []
         lapseConf = mw.col.sched._lapseConf(card)
         lf = lapseConf["leechFails"]
         if card.lapses >= lf:
@@ -147,8 +151,9 @@ class FlashcardsDeluxeImporter(NoteImporter):
             note.addTag("leech")
             note.flush()
             if lapseConf["leechAction"] == 0:
-                card.queue = -1 # suspend
+                suspendIds.append(card.id)
             runHook("leech", card)
+        return suspendIds
 
 def _appendIfNotEmpty(arr, text):
     if text and text.strip():
