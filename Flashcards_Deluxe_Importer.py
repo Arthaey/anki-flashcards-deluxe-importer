@@ -138,7 +138,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 card.lapses = stats.lapses
                 card.did = did
 
-                suspendIds += self.checkLeech(card, sched._lapseConf(card))
+                suspendIds += self._checkLeech(card, sched._lapseConf(card))
 
                 # queue types: 0=new/cram, 1=lrn, 2=rev, 3=day lrn, -1=suspended, -2=buried
                 # revlog types: 0=lrn, 1=rev, 2=relrn, 3=cram
@@ -162,7 +162,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         NoteImporter.updateCards(self)
         sched.suspendCards(suspendIds)
 
-    def checkLeech(self, card, lapseConf):
+    def _checkLeech(self, card, lapseConf):
         suspendIds = []
         lf = lapseConf["leechFails"]
         if card.lapses >= lf:
