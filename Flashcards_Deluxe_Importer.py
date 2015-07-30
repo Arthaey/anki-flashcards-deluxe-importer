@@ -1,3 +1,12 @@
+# TODO:
+# - handle FCD card status
+# - allow HTML
+# - turn <u>foo</u> into clozes
+# - prompt user for exported FCD deck file
+# - add cards to currently selected deck
+# - dynamically determine the number of fields for the model
+# - check whether the Note Id addon is actually in use
+
 import csv
 from datetime import datetime
 import random
@@ -146,8 +155,8 @@ def importFlashcardsDeluxe():
     #mw.col.decks.save(deck)
 
     # import into the collection (with whichever is the current deck)
-    fcdFile = open(fcdFilename, "r") # FIXME
-    importer = FlashcardsDeluxeImporter(mw.col, fcdFile) # FIXME
+    fcdFile = open(fcdFilename, "r")
+    importer = FlashcardsDeluxeImporter(mw.col, fcdFile)
     importer.initMapping()
     importer.run()
     showInfo("Finished importing {0} notes from {1}".format(
