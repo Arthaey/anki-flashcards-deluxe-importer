@@ -12,11 +12,11 @@ from datetime import datetime
 import random
 import sys
 
-from aqt import mw
-from aqt.utils import showInfo
-from aqt.qt import *
-from anki.importing import TextImporter
+from anki.hooks import runHook
 from anki.importing.noteimp import NoteImporter, ForeignNote
+from aqt import mw
+from aqt.qt import *
+from aqt.utils import showInfo
 
 from flashcards_deluxe_importer.statistics import Statistics
 
@@ -121,14 +121,31 @@ class FlashcardsDeluxeImporter(NoteImporter):
         # Use the same statistics for both directions.
         for nid in self.newNoteIds:
             stats = self.cardStats[nid]
-            for card in mw.col.getNote(nid).cards():
+            note = mw.col.getNote(nid)
+
+            for card in note.cards():
                 card.ivl = stats.intervalInDays()
                 card.due = stats.dueInDays(self.startedAt)
                 card.factor = random.randint(1500,2500)
                 card.reps = stats.reviewCount
                 card.lapses = stats.lapses()
+
+                self.checkLeech(card)
+
                 self._cards.append((nid, card.ord, card))
+
         NoteImporter.updateCards(self)
+
+    def checkLeech(self, card):
+        lapseConf = mw.col.sched._lapseConf(card)
+        lf = lapseConf["leechFails"]
+        if card.lapses >= lf:
+            note = card.note()
+            note.addTag("leech")
+            note.flush()
+            if lapseConf["leechAction"] == 0:
+                card.queue = -1 # suspend
+            runHook("leech", card)
 
 def _appendIfNotEmpty(arr, text):
     if text and text.strip():
@@ -145,14 +162,14 @@ ForeignNote.__repr__ = _variables
 def importFlashcardsDeluxe():
     # set current deck ("did" = deck ID)
     # FIXME: it's still using the default deck, why?
-    #did = mw.col.decks.id("TEST")
-    #mw.col.decks.select(did)
+    did = mw.col.decks.id("TEST")
+    mw.col.decks.select(did)
 
     # set note type for deck ("mid" = model aka note ID)
-    #m = mw.col.models.byName("Basic (and reversed card)")
-    #deck = mw.col.decks.get(did)
-    #deck["mid"] = m["id"]
-    #mw.col.decks.save(deck)
+    m = mw.col.models.byName("Basic (and reversed card)")
+    deck = mw.col.decks.get(did)
+    deck["mid"] = m["id"]
+    mw.col.decks.save(deck)
 
     # import into the collection (with whichever is the current deck)
     fcdFile = open(fcdFilename, "r")
