@@ -18,6 +18,7 @@ from aqt.qt import *
 from aqt.utils import showInfo
 
 from flashcards_deluxe_importer.statistics import Statistics
+from flashcards_deluxe_importer.util import appendIfNotEmpty
 
 import pprint # DELETE
 pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
@@ -67,8 +68,8 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
 
-                _appendIfNotEmpty(self.tagsToAdd, row["Category 1"])
-                _appendIfNotEmpty(self.tagsToAdd, row["Category 2"])
+                appendIfNotEmpty(self.tagsToAdd, row["Category 1"])
+                appendIfNotEmpty(self.tagsToAdd, row["Category 2"])
 
                 statsString = row["Statistics 1"]
                 stats = Statistics.parse(statsString)
@@ -172,18 +173,6 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 suspendIds.append(card.id)
             runHook("leech", card)
         return suspendIds
-
-def _appendIfNotEmpty(arr, text):
-    if text and text.strip():
-        arr.append(text.lower())
-
-def _variables(self):
-    x = ["{}:{}".format(k,v) for k,v in sorted(self.__dict__.iteritems())]
-    return "<{0} {1}>".format(type(self).__name__, " ".join(x))
-
-# monkey patch to print out a more useful debugging string
-Statistics.__repr__ = _variables
-ForeignNote.__repr__ = _variables
 
 def importFlashcardsDeluxe():
     # import into the collection (with whichever is the current deck)
