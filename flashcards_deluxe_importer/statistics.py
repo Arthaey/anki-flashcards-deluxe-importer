@@ -4,7 +4,7 @@ class Statistics(object):
     def __init__(self, status, flagged, reviewCount, correctCount, streak,
             leitnerRounds, srsIntervalHours, lastReview, dueDate):
         self.status = int(status)
-        self.flagged = (flagged == 1)
+        self.flagged = (flagged == "1")
         self.reviewCount = int(reviewCount)
         self.correctCount = int(correctCount)
         self.streak = int(streak)
