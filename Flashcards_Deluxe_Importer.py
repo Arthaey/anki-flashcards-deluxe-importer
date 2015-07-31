@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 
 # TODO:
+# - dynamically check how many leading lines to ignore
 # - allow HTML
 # - prompt user for exported FCD file
 # - prompt user for which deck to use
