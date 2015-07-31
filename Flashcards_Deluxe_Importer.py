@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 
 # TODO:
+# - dynamically check how many leading lines to ignore
 # - allow HTML
 # - prompt user for exported FCD file
 # - prompt user for which deck to use
@@ -14,20 +15,31 @@ import random
 import re
 import sys
 
+import pprint # DELETE
+pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
+
 # Required so that utf-8 characters can be used in the source code.
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-from anki.hooks import runHook
+from anki.hooks import runHook, wrap
+import anki.importing
 from anki.importing.noteimp import NoteImporter, ForeignNote
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import showInfo
 
+from anki.importing.csvfile import TextImporter
+from anki.importing.apkg import AnkiPackageImporter
+from anki.importing.anki2 import Anki2Importer
+from anki.importing.anki1 import Anki1Importer
+from anki.importing.supermemo_xml import SupermemoXmlImporter
+from anki.importing.mnemo import MnemosyneImporter
+from anki.importing.pauker import PaukerImporter
+from anki.lang import _
+
 from flashcards_deluxe_importer.statistics import Statistics
 
-import pprint # DELETE
-pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
 fcdFilename = os.path.expanduser("~") + "/FCD-Miscellaneous.txt" # FIXME
 
 SECONDS_PER_DAY = 60*60*24
@@ -39,16 +51,19 @@ RENAME_TAGS = {
     "medical": "topics::medical",
 }
 
-class FlashcardsDeluxeImporter(NoteImporter):
+class FlashcardsDeluxeImporter(TextImporter):
 
     needDelimiter = True
+    patterns = ("\t")
 
     def __init__(self, *args):
         NoteImporter.__init__(self, *args)
         self.lines = None
+        self.fileobj = None
         self.delimiter = "\t"
         self.tagsToAdd = ["FCD"]
-        self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
+        #self.allowHTML = True # TODO?
+        self.numFields = 6 # Note ID, Front, Back, Citation # FIXME
 
         # specific to FlashcardsDeluxeImporter
         self.cardStats = {}
@@ -78,16 +93,17 @@ class FlashcardsDeluxeImporter(NoteImporter):
         lineNum = 0
 
         # skip first 10 lines (does this vary or is it constant?)
-        for _ in range(10):
-            self.file.next()
+#       for _ in range(10):
+#           self.file.next()
 
-        reader = csv.DictReader(self.file, delimiter="\t", doublequote=True)
+        reader = csv.DictReader(self.data, delimiter=self.delimiter, doublequote=True)
         try:
             for row in reader:
                 lineNum += 1
                 id = "Note #{0} imported at {1}".format(lineNum, now)
 
-                row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
+#               row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
+                pp.pprint(row) # DELETE
                 front = row["Text 1"]
                 back = row["Text 2"]
                 hint = row["Text 3"]
@@ -113,7 +129,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
         self.log = log
         self.ignored = ignored
-        self.file.close()
+        self.fileobj.close()
         return notes
 
     def addTag(self, tags, tag):
@@ -131,6 +147,18 @@ class FlashcardsDeluxeImporter(NoteImporter):
         note.fields.extend([id, front, back, ""])
         note.tags.extend(tags + self.tagsToAdd)
         return note
+
+    def initMapping(self):
+        pp.pprint("SELF.MODEL") # DELETE
+        pp.pprint(self.model) # DELETE
+        fields = [""]*len(self.model['flds']) # DELETE
+        pp.pprint("FIELDS") # DELETE
+        pp.pprint(fields) # DELETE
+        pp.pprint("SELF.FIELDS()") # DELETE
+        pp.pprint(self.fields()) # DELETE
+        NoteImporter.initMapping(self)
+        pp.pprint("SELF.MAPPING") # DELETE
+        pp.pprint(self.mapping) # DELETE
 
     def newData(self, n):
         # [id, guid64(), self.model['id'],
@@ -228,3 +256,13 @@ def importFlashcardsDeluxe():
 action = QAction("Import from Flashcards Deluxe", mw)
 mw.connect(action, SIGNAL("triggered()"), importFlashcardsDeluxe)
 mw.form.menuTools.addAction(action)
+
+anki.importing.Importers = (
+    (_("Text separated by tabs or semicolons (*)"), TextImporter),
+    (_("Packaged Anki Deck (*.apkg *.zip)"), AnkiPackageImporter),
+    (_("Anki 1.2 Deck (*.anki)"), Anki1Importer),
+    (_("Mnemosyne 2.0 Deck (*.db)"), MnemosyneImporter),
+    (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
+    (_("Pauker 1.8 Lesson (*.pau.gz)"), PaukerImporter),
+    (_("Flashcards Deluxe (*.txt)"), FlashcardsDeluxeImporter),
+    )
