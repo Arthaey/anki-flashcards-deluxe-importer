@@ -36,6 +36,7 @@ RENAME_TAGS = {
     "phrases": "español::frases",
     "sentences": "español::oraciones",
     "vocabulary": "español::vocabulario",
+    "medical": "topics::medical",
 }
 
 class FlashcardsDeluxeImporter(NoteImporter):
