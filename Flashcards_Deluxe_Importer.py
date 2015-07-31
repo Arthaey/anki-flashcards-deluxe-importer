@@ -14,6 +14,7 @@ import random
 import re
 import sys
 
+# Required so that utf-8 characters can be used in the source code.
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -93,14 +94,15 @@ class FlashcardsDeluxeImporter(NoteImporter):
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
 
-                self.addTag(row["Category 1"])
-                self.addTag(row["Category 2"])
+                tags = []
+                self.addTag(tags, row["Category 1"])
+                self.addTag(tags, row["Category 2"])
 
                 statsString = row["Statistics 1"]
                 stats = Statistics.parse(statsString)
                 self.cardStats[id] = stats
 
-                note = self.noteFromFields(id, front, back)
+                note = self.noteFromFields(id, front, back, tags)
                 if stats.flagged:
                     note.tags.append("marked")
 
@@ -113,20 +115,20 @@ class FlashcardsDeluxeImporter(NoteImporter):
         self.file.close()
         return notes
 
-    def addTag(self, tag):
+    def addTag(self, tags, tag):
         if tag and tag.strip():
             tag = RENAME_TAGS.get(tag.lower(), tag.lower())
-            self.tagsToAdd.append(tag)
+            tags.append(tag)
 
     def fields(self):
         "Number of fields."
         self.open()
         return self.numFields
 
-    def noteFromFields(self, id, front, back):
+    def noteFromFields(self, id, front, back, tags):
         note = ForeignNote()
         note.fields.extend([id, front, back, ""])
-        note.tags.extend(self.tagsToAdd)
+        note.tags.extend(tags + self.tagsToAdd)
         return note
 
     def newData(self, n):
