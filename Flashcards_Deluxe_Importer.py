@@ -15,6 +15,10 @@ import random
 import re
 import sys
 
+# Must happen before reload(sys).
+import pprint # DELETE
+pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
+
 # Required so that utf-8 characters can be used in the source code.
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -27,8 +31,6 @@ from aqt.utils import showInfo
 
 from flashcards_deluxe_importer.statistics import Statistics
 
-import pprint # DELETE
-pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
 fcdFilename = os.path.expanduser("~") + "/FCD-Miscellaneous.txt" # FIXME
 
 SECONDS_PER_DAY = 60*60*24
