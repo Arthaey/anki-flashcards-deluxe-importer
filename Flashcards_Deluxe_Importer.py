@@ -1,7 +1,6 @@
 # vim: set fileencoding=utf-8 :
 
 # TODO:
-# - dynamically check how many leading lines to ignore
 # - prompt user for exported FCD file
 # - prompt user for which deck to use
 # - prompt user for tag mapping
@@ -82,10 +81,10 @@ class FlashcardsDeluxeImporter(TextImporter):
         ignored = 0
         lineNum = 0
 
-        # TODO: dynamically check how many leading lines to ignore
-        # skip first 10 lines (does this vary or is it constant?)
-        #for _ in range(10):
-        #    self.file.next()
+        # skip leading lines that define the FCD deck
+        i = 0
+        while (self.data[i].startswith("*")):
+            self.data.pop(0)
 
         reader = csv.DictReader(self.data, delimiter="\t", doublequote=True)
         try:
