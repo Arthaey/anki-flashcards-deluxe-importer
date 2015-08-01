@@ -11,7 +11,6 @@ def setupUi():
     ImportDialog.accept = wrap(
         ImportDialog.accept, acceptForFlashcardsDeluxe, "before")
 
-
 def setupOptionsForFlashcardsDeluxe(self):
     self.frm.tagsToAdd = QLineEdit()
     self.frm.tagsToAdd.setText(" ".join(self.importer.tagsToAdd))
