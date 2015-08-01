@@ -21,11 +21,7 @@ pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-from anki.hooks import runHook
-from aqt import mw
-from aqt.qt import *
-from aqt.utils import showInfo
-
+from anki.hooks import runHook, wrap
 import anki.importing
 from anki.importing import TextImporter
 from anki.importing.anki1 import Anki1Importer
@@ -36,6 +32,11 @@ from anki.importing.noteimp import NoteImporter, ForeignNote
 from anki.importing.pauker import PaukerImporter
 from anki.importing.supermemo_xml import SupermemoXmlImporter
 from anki.lang import _
+
+from aqt import mw
+from aqt.importing import ImportDialog
+from aqt.qt import *
+from aqt.utils import showInfo
 
 from flashcards_deluxe_importer.statistics import Statistics
 
@@ -233,6 +234,7 @@ class FlashcardsDeluxeImporter(TextImporter):
             runHook("leech", card)
         return suspendIds
 
+# TODO: append
 anki.importing.Importers = (
     (_("Text separated by tabs or semicolons (*)"), TextImporter),
     (_("Packaged Anki Deck (*.apkg *.zip)"), AnkiPackageImporter),
@@ -241,4 +243,20 @@ anki.importing.Importers = (
     (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
     (_("Pauker 1.8 Lesson (*.pau.gz)"), PaukerImporter),
     (_("Flashcards Deluxe (*.txt)"), FlashcardsDeluxeImporter),
+)
+
+def setupOptionsForFlashcardsDeluxe(self):
+    layout = self.findChild(QVBoxLayout, "toplayout")
+    self.frm.tagsToAdd = QLineEdit()
+    self.frm.tagsToAdd.setText(" ".join(self.importer.tagsToAdd))
+    layout.addWidget(self.frm.tagsToAdd)
+
+def acceptForFlashcardsDeluxe(self):
+    self.importer.tagsToAdd = self.frm.tagsToAdd.text().split(" ")
+
+ImportDialog.setupOptions = wrap(
+    ImportDialog.setupOptions, setupOptionsForFlashcardsDeluxe, "after"
+)
+ImportDialog.accept = wrap(
+    ImportDialog.accept, acceptForFlashcardsDeluxe, "before"
 )
