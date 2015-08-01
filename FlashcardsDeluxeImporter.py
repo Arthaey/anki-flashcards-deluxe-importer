@@ -98,10 +98,10 @@ class FlashcardsDeluxeImporter(TextImporter):
                 lineNum += 1
                 id = "Note #{0} imported at {1}".format(lineNum, now)
 
-                row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
-                front = row["Text 1"]
-                back, isCloze = self._replaceClozes(row["Text 2"])
-                hint = row["Text 3"]
+                row = {k: unicode(v, "utf-8") if v else u"" for k,v in row.iteritems()}
+                front = row.get("Text 1", "")
+                back, isCloze = self._replaceClozes(row.get("Text 2", ""))
+                hint = row.get("Text 3", "")
 
                 front = self._handleNewlines(front)
                 back = self._handleNewlines(back)
@@ -111,8 +111,8 @@ class FlashcardsDeluxeImporter(TextImporter):
                     front += "\n<div class='extra'>{0}</div>".format(hint)
 
                 tags = []
-                self._addTag(tags, row["Category 1"])
-                self._addTag(tags, row["Category 2"])
+                self._addTag(tags, row.get("Category 1", ""))
+                self._addTag(tags, row.get("Category 2", ""))
                 self.newTags.update(tags)
 
                 statsString = row["Statistics 1"]
