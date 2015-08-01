@@ -22,7 +22,7 @@ sys.setdefaultencoding('utf8')
 from anki.hooks import runHook
 import anki.importing
 from anki.importing import TextImporter
-from anki.importing.noteimp import NoteImporter, ForeignNote
+from anki.importing.noteimp import ForeignNote
 
 from aqt import mw
 from aqt.qt import *
@@ -45,7 +45,7 @@ class FlashcardsDeluxeImporter(TextImporter):
     allowHTML = True
 
     def __init__(self, *args):
-        NoteImporter.__init__(self, *args)
+        TextImporter.__init__(self, *args)
         self.lines = None
         self.fileobj = None
         self.delimiter = "\t"
@@ -57,11 +57,19 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.newNoteIds = []
         self.clozeNoteIds = []
 
+    def run(self):
+        # Always use the basic/reversed model, regardless of the current model.
+        mm = self.col.models
+        basicReversedModel = mm.byName("Basic (and reversed card)")
+        self.model = basicReversedModel
+        self.initMapping()
+        TextImporter.run(self)
+
     def importNotes(self, notes):
-        NoteImporter.importNotes(self, notes)
+        TextImporter.importNotes(self, notes)
 
         # Update any cloze cards.
-        mm = mw.col.models
+        mm = self.col.models
         basicReversedModel = mm.byName("Basic (and reversed card)")
         clozeModel = mm.byName("Cloze")
         fmap = {0: 0, 1: 2, 2: 1, 3: 3}
@@ -154,7 +162,7 @@ class FlashcardsDeluxeImporter(TextImporter):
         # [id, guid64(), self.model['id'],
         #  intTime(), self.col.usn(), self.col.tags.join(n.tags),
         #  n.fieldsStr, "", "", 0, ""]
-        superData = NoteImporter.newData(self, n)
+        superData = TextImporter.newData(self, n)
 
         id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d = superData
         fields = fieldsStr.split("\x1f")
@@ -209,7 +217,7 @@ class FlashcardsDeluxeImporter(TextImporter):
                 card.flush()
                 self._cards.append((nid, card.ord, card))
 
-        NoteImporter.updateCards(self)
+        TextImporter.updateCards(self)
         sched.suspendCards(suspendIds)
 
     def _checkLeech(self, card, lapseConf):
