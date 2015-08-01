@@ -2,7 +2,6 @@
 
 # TODO:
 # - dynamically check how many leading lines to ignore
-# - allow HTML
 # - prompt user for exported FCD file
 # - prompt user for which deck to use
 # - prompt user for tag mapping
@@ -46,6 +45,7 @@ RENAME_TAGS = {
 class FlashcardsDeluxeImporter(TextImporter):
 
     needDelimiter = True
+    allowHTML = True
 
     def __init__(self, *args):
         NoteImporter.__init__(self, *args)
@@ -64,6 +64,7 @@ class FlashcardsDeluxeImporter(TextImporter):
     def importNotes(self, notes):
         NoteImporter.importNotes(self, notes)
 
+        # Update any cloze cards.
         mm = mw.col.models
         basicReversedModel = mm.byName("Basic (and reversed card)")
         clozeModel = mm.byName("Cloze")
@@ -94,15 +95,16 @@ class FlashcardsDeluxeImporter(TextImporter):
 
                 row = {k: unicode(v, "utf-8") for k,v in row.iteritems()}
                 front = row["Text 1"]
-                back = row["Text 2"]
+                back, isCloze = self._replaceClozes(row["Text 2"])
                 hint = row["Text 3"]
+
 
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
 
                 tags = []
-                self.addTag(tags, row["Category 1"])
-                self.addTag(tags, row["Category 2"])
+                self._addTag(tags, row["Category 1"])
+                self._addTag(tags, row["Category 2"])
 
                 statsString = row["Statistics 1"]
                 stats = Statistics.parse(statsString)
@@ -111,6 +113,8 @@ class FlashcardsDeluxeImporter(TextImporter):
                 note = self.noteFromFields(id, front, back, tags)
                 if stats.flagged:
                     note.tags.append("marked")
+                if isCloze:
+                    self.clozeNoteIds.append(id)
 
                 notes.append(note)
         except (csv.Error), e:
@@ -121,10 +125,20 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.fileobj.close()
         return notes
 
-    def addTag(self, tags, tag):
+    def _addTag(self, tags, tag):
         if tag and tag.strip():
             tag = RENAME_TAGS.get(tag.lower(), tag.lower())
             tags.append(tag)
+
+    # Returns the replaced text (if neeeded) and whether text was changed.
+    def _replaceClozes(self, text):
+        # horrible ugly hack but works "well enough" :(
+        if "</u>" in text:
+            return re.sub(r"<u.*?>(.+?)</u>", r"{{c1::\1}}", text), True
+        elif "</b>" in text:
+            return re.sub(r"<b.*?>(.+?)</b>", r"{{c1::\1}}", text), True
+        else:
+            return text, False
 
     def fields(self):
         "Number of fields."
@@ -147,12 +161,15 @@ class FlashcardsDeluxeImporter(TextImporter):
         fields = fieldsStr.split("\x1f")
         noteId, front, back, citation = fields
 
+        self.newNoteIds.append(id)
+
+        # change to the actual note ID, now that it's assigned
         self.cardStats[id] = self.cardStats[noteId]
         del self.cardStats[noteId]
-
-        self.newNoteIds.append(id)
-        noteId = str(id) # change to the actual note ID, now that it's assigned
-        fieldsStr = "\x1f".join([noteId, front, back, citation])
+        if noteId in self.clozeNoteIds:
+            ndx = self.clozeNoteIds.index(noteId)
+            self.clozeNoteIds[ndx] = id
+        fieldsStr = "\x1f".join([str(id), front, back, citation])
 
         return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
 
@@ -164,17 +181,6 @@ class FlashcardsDeluxeImporter(TextImporter):
             note = mw.col.getNote(nid)
             note.did = self.deckId
             stats = self.cardStats[nid]
-
-            # horrible ugly hack but works "well enough" :(
-            back = note["Back"]
-            if "&lt;/u&gt;" in note["Back"]:
-                self.clozeNoteIds.append(nid)
-                note["Back"] = re.sub(r"&lt;u.*?&gt;(.+?)&lt;/u&gt;", r"{{c1::\1}}", back)
-                note.flush()
-            elif "&lt;/b&gt;" in note["Back"]:
-                self.clozeNoteIds.append(nid)
-                note["Back"] = re.sub(r"&lt;b.*?&gt;(.+?)&lt;/b&gt;", r"{{c1::\1}}", back)
-                note.flush()
 
             # Use the same statistics for both directions.
             for card in note.cards():
