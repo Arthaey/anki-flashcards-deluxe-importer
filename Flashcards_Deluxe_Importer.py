@@ -98,6 +98,9 @@ class FlashcardsDeluxeImporter(TextImporter):
                 back, isCloze = self._replaceClozes(row["Text 2"])
                 hint = row["Text 3"]
 
+                front = front.replace("\n", "<br>")
+                back = back.replace("\n", "<br>")
+                hint = hint.replace("\n", "<br>")
 
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
