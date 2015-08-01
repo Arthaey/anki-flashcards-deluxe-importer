@@ -1,8 +1,6 @@
 # vim: set fileencoding=utf-8 :
 
 # TODO:
-# - prompt user for exported FCD file
-# - prompt user for which deck to use
 # - prompt user for tag mapping
 # - dynamically determine the number of fields for the model
 # - check whether the Note Id addon is actually in use
@@ -234,17 +232,6 @@ class FlashcardsDeluxeImporter(TextImporter):
             runHook("leech", card)
         return suspendIds
 
-# TODO: append
-anki.importing.Importers = (
-    (_("Text separated by tabs or semicolons (*)"), TextImporter),
-    (_("Packaged Anki Deck (*.apkg *.zip)"), AnkiPackageImporter),
-    (_("Anki 1.2 Deck (*.anki)"), Anki1Importer),
-    (_("Mnemosyne 2.0 Deck (*.db)"), MnemosyneImporter),
-    (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
-    (_("Pauker 1.8 Lesson (*.pau.gz)"), PaukerImporter),
-    (_("Flashcards Deluxe (*.txt)"), FlashcardsDeluxeImporter),
-)
-
 def setupOptionsForFlashcardsDeluxe(self):
     self.frm.tagsToAdd = QLineEdit()
     self.frm.tagsToAdd.setText(" ".join(self.importer.tagsToAdd))
@@ -259,9 +246,11 @@ def setupOptionsForFlashcardsDeluxe(self):
 def acceptForFlashcardsDeluxe(self):
     self.importer.tagsToAdd = self.frm.tagsToAdd.text().split(" ")
 
+anki.importing.Importers = anki.importing.Importers +
+    ( (_("Flashcards Deluxe (*.txt)"), FlashcardsDeluxeImporter), )
+
 ImportDialog.setupOptions = wrap(
-    ImportDialog.setupOptions, setupOptionsForFlashcardsDeluxe, "after"
-)
+    ImportDialog.setupOptions, setupOptionsForFlashcardsDeluxe, "after")
+
 ImportDialog.accept = wrap(
-    ImportDialog.accept, acceptForFlashcardsDeluxe, "before"
-)
+    ImportDialog.accept, acceptForFlashcardsDeluxe, "before")
