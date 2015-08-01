@@ -19,23 +19,15 @@ pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-from anki.hooks import runHook, wrap
+from anki.hooks import runHook
 import anki.importing
 from anki.importing import TextImporter
-from anki.importing.anki1 import Anki1Importer
-from anki.importing.anki2 import Anki2Importer
-from anki.importing.apkg import AnkiPackageImporter
-from anki.importing.mnemo import MnemosyneImporter
 from anki.importing.noteimp import NoteImporter, ForeignNote
-from anki.importing.pauker import PaukerImporter
-from anki.importing.supermemo_xml import SupermemoXmlImporter
-from anki.lang import _
 
 from aqt import mw
-from aqt.importing import ImportDialog
 from aqt.qt import *
-from aqt.utils import showInfo
 
+from flashcards_deluxe_importer import ui
 from flashcards_deluxe_importer.statistics import Statistics
 
 SECONDS_PER_DAY = 60*60*24
@@ -232,25 +224,7 @@ class FlashcardsDeluxeImporter(TextImporter):
             runHook("leech", card)
         return suspendIds
 
-def setupOptionsForFlashcardsDeluxe(self):
-    self.frm.tagsToAdd = QLineEdit()
-    self.frm.tagsToAdd.setText(" ".join(self.importer.tagsToAdd))
-
-    tagLayout = QHBoxLayout()
-    tagLayout.addWidget(QLabel("Tags"))
-    tagLayout.addWidget(self.frm.tagsToAdd)
-
-    topLayout = self.findChild(QVBoxLayout, "toplayout")
-    topLayout.addLayout(tagLayout)
-
-def acceptForFlashcardsDeluxe(self):
-    self.importer.tagsToAdd = self.frm.tagsToAdd.text().split(" ")
-
-anki.importing.Importers = anki.importing.Importers +
-    ( (_("Flashcards Deluxe (*.txt)"), FlashcardsDeluxeImporter), )
-
-ImportDialog.setupOptions = wrap(
-    ImportDialog.setupOptions, setupOptionsForFlashcardsDeluxe, "after")
-
-ImportDialog.accept = wrap(
-    ImportDialog.accept, acceptForFlashcardsDeluxe, "before")
+ui.setupUi()
+anki.importing.Importers = anki.importing.Importers + (
+    (_("Flashcards Deluxe (*.txt)"), FlashcardsDeluxeImporter),
+)
