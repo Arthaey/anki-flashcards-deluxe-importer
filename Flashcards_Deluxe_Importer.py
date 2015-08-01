@@ -80,9 +80,10 @@ class FlashcardsDeluxeImporter(NoteImporter):
         ignored = 0
         lineNum = 0
 
+        # TODO: dynamically check how many leading lines to ignore
         # skip first 10 lines (does this vary or is it constant?)
-        for _ in range(10):
-            self.file.next()
+        #for _ in range(10):
+        #    self.file.next()
 
         reader = csv.DictReader(self.file, delimiter="\t", doublequote=True)
         try:
