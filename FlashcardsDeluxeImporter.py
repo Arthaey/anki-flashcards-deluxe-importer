@@ -102,9 +102,9 @@ class FlashcardsDeluxeImporter(TextImporter):
                 back, isCloze = self._replaceClozes(row["Text 2"])
                 hint = row["Text 3"]
 
-                front = front.replace("\n", "<br>")
-                back = back.replace("\n", "<br>")
-                hint = hint.replace("\n", "<br>")
+                front = self._handleNewlines(front)
+                back = self._handleNewlines(back)
+                hint = self._handleNewlines(hint)
 
                 if hint and hint.strip():
                     front += "\n<div class='extra'>{0}</div>".format(hint)
@@ -131,6 +131,11 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.ignored = ignored
         self.fileobj.close()
         return notes
+
+    def _handleNewlines(self, text):
+        text = text.replace("|", "\n")
+        text = text.replace("\n", "<br>")
+        return text
 
     def _addTag(self, tags, tag):
         if tag and tag.strip():
