@@ -246,10 +246,15 @@ anki.importing.Importers = (
 )
 
 def setupOptionsForFlashcardsDeluxe(self):
-    layout = self.findChild(QVBoxLayout, "toplayout")
     self.frm.tagsToAdd = QLineEdit()
     self.frm.tagsToAdd.setText(" ".join(self.importer.tagsToAdd))
-    layout.addWidget(self.frm.tagsToAdd)
+
+    tagLayout = QHBoxLayout()
+    tagLayout.addWidget(QLabel("Tags"))
+    tagLayout.addWidget(self.frm.tagsToAdd)
+
+    topLayout = self.findChild(QVBoxLayout, "toplayout")
+    topLayout.addLayout(tagLayout)
 
 def acceptForFlashcardsDeluxe(self):
     self.importer.tagsToAdd = self.frm.tagsToAdd.text().split(" ")
