@@ -187,7 +187,6 @@ class FlashcardsDeluxeImporter(TextImporter):
 
         for nid in self.newNoteIds:
             note = mw.col.getNote(nid)
-            note.did = self.deckId
             stats = self.cardStats[nid]
 
             # Use the same statistics for both directions.
@@ -197,7 +196,6 @@ class FlashcardsDeluxeImporter(TextImporter):
                 card.factor = random.randint(1500,2500)
                 card.reps = stats.reviewCount
                 card.lapses = stats.lapses
-                card.did = self.deckId
 
                 suspendIds += self._checkLeech(card, sched._lapseConf(card))
 
