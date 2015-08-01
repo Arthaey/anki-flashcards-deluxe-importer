@@ -24,6 +24,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 from anki.hooks import runHook
+from anki.importing import TextImporter
 from anki.importing.noteimp import NoteImporter, ForeignNote
 from aqt import mw
 from aqt.qt import *
@@ -42,16 +43,16 @@ RENAME_TAGS = {
     "medical": "topics::medical",
 }
 
-class FlashcardsDeluxeImporter(NoteImporter):
+class FlashcardsDeluxeImporter(TextImporter):
 
     needDelimiter = True
 
     def __init__(self, *args):
         NoteImporter.__init__(self, *args)
         self.lines = None
+        self.fileobj = None
         self.delimiter = "\t"
         self.tagsToAdd = ["FCD"]
-        self.numFields = 4 # Note ID, Front, Back, Citation # FIXME
 
         # specific to FlashcardsDeluxeImporter
         self.cardStats = {}
@@ -85,7 +86,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
         #for _ in range(10):
         #    self.file.next()
 
-        reader = csv.DictReader(self.file, delimiter="\t", doublequote=True)
+        reader = csv.DictReader(self.data, delimiter="\t", doublequote=True)
         try:
             for row in reader:
                 lineNum += 1
@@ -117,7 +118,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
         self.log = log
         self.ignored = ignored
-        self.file.close()
+        self.fileobj.close()
         return notes
 
     def addTag(self, tags, tag):
@@ -128,7 +129,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
     def fields(self):
         "Number of fields."
         self.open()
-        return self.numFields
+        return 4 # Note ID, Front, Back, Citation # FIXME
 
     def noteFromFields(self, id, front, back, tags):
         note = ForeignNote()
@@ -222,8 +223,7 @@ class FlashcardsDeluxeImporter(NoteImporter):
 
 def importFlashcardsDeluxe():
     # import into the collection (with whichever is the current deck)
-    fcdFile = open(fcdFilename, "r")
-    importer = FlashcardsDeluxeImporter(mw.col, fcdFile)
+    importer = FlashcardsDeluxeImporter(mw.col, fcdFilename)
     importer.initMapping()
     importer.run()
     showInfo("Finished importing {0} notes from {1}".format(
