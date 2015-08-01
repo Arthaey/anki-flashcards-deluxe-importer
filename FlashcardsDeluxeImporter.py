@@ -116,11 +116,12 @@ class FlashcardsDeluxeImporter(TextImporter):
                 self.newTags.update(tags)
 
                 statsString = row["Statistics 1"]
-                stats = Statistics.parse(statsString)
-                self.cardStats[id] = stats
+                if statsString:
+                    stats = Statistics.parse(statsString)
+                    self.cardStats[id] = stats
 
                 note = self.noteFromFields(id, front, back, tags)
-                if stats.flagged:
+                if stats and stats.flagged:
                     note.tags.append("marked")
                 if isCloze:
                     self.clozeNoteIds.append(id)
@@ -181,8 +182,9 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.newNoteIds.append(id)
 
         # change to the actual note ID, now that it's assigned
-        self.cardStats[id] = self.cardStats[noteId]
-        del self.cardStats[noteId]
+        if noteId in self.cardStats:
+            self.cardStats[id] = self.cardStats[noteId]
+            del self.cardStats[noteId]
         if noteId in self.clozeNoteIds:
             ndx = self.clozeNoteIds.index(noteId)
             self.clozeNoteIds[ndx] = id
@@ -191,56 +193,57 @@ class FlashcardsDeluxeImporter(TextImporter):
         return [id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d]
 
     def updateCards(self):
-        sched = mw.col.sched
-        suspendIds = []
+        suspendIds = set([])
 
         for nid in self.newNoteIds:
             note = mw.col.getNote(nid)
+            if not nid in self.cardStats:
+                continue
             stats = self.cardStats[nid]
 
             # Use the same statistics for both directions.
             for card in note.cards():
-                card.ivl = stats.intervalInDays
-                card.due = stats.dueInDays(self.startedAt)
-                card.factor = random.randint(1500,2500)
-                card.reps = stats.reviewCount
-                card.lapses = stats.lapses
-
-                suspendIds += self._checkLeech(card, sched._lapseConf(card))
-
-                # queue types: 0=new/cram, 1=lrn, 2=rev, 3=day lrn, -1=suspended, -2=buried
-                # revlog types: 0=lrn, 1=rev, 2=relrn, 3=cram
-                # FIXME: Cards aren't going to the new or learning queues. Why?
-                if stats.pending: # new
-                    card.type = 0
-                    card.queue = 0
-                    card.due = card.id
-                elif stats.new: # learning
-                    card.type = 1
-                    card.queue = 1
-                elif stats.active: # graduated
-                    card.type = 2
-                    card.queue = 2
-                elif stats.excluded: # suspended
-                    suspendIds += [card.id]
-
+                self._updateStatistics(card, stats, suspendIds)
                 card.flush()
                 self._cards.append((nid, card.ord, card))
 
         TextImporter.updateCards(self)
-        sched.suspendCards(suspendIds)
+        mw.col.sched.suspendCards(suspendIds)
 
-    def _checkLeech(self, card, lapseConf):
-        suspendIds = []
+    def _updateStatistics(self, card, stats, suspendIds):
+        card.ivl = stats.intervalInDays
+        card.due = stats.dueInDays(self.startedAt)
+        card.factor = random.randint(1500,2500)
+        card.reps = stats.reviewCount
+        card.lapses = stats.lapses
+
+        self._checkLeech(card, mw.col.sched._lapseConf(card), suspendIds)
+
+        # queue types: 0=new/cram, 1=lrn, 2=rev, 3=day lrn, -1=suspended, -2=buried
+        # revlog types: 0=lrn, 1=rev, 2=relrn, 3=cram
+        # FIXME: Cards aren't going to the new or learning queues. Why?
+        if stats.pending: # new
+            card.type = 0
+            card.queue = 0
+            card.due = card.id
+        elif stats.new: # learning
+            card.type = 1
+            card.queue = 1
+        elif stats.active: # graduated
+            card.type = 2
+            card.queue = 2
+        elif stats.excluded: # suspended
+            suspendIds.add(card.id)
+
+    def _checkLeech(self, card, lapseConf, suspendIds):
         lf = lapseConf["leechFails"]
         if card.lapses >= lf:
             note = card.note()
             note.addTag("leech")
             note.flush()
             if lapseConf["leechAction"] == 0:
-                suspendIds.append(card.id)
+                suspendIds.add(card.id)
             runHook("leech", card)
-        return suspendIds
 
 ui.setupUi()
 anki.importing.Importers = anki.importing.Importers + (
