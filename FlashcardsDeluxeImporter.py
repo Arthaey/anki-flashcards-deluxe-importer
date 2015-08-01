@@ -56,6 +56,7 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.startedAt = datetime.now()
         self.newNoteIds = []
         self.clozeNoteIds = []
+        self.newTags = set([])
 
     def run(self):
         # Always use the basic/reversed model, regardless of the current model.
@@ -112,6 +113,7 @@ class FlashcardsDeluxeImporter(TextImporter):
                 tags = []
                 self._addTag(tags, row["Category 1"])
                 self._addTag(tags, row["Category 2"])
+                self.newTags.update(tags)
 
                 statsString = row["Statistics 1"]
                 stats = Statistics.parse(statsString)
@@ -126,6 +128,9 @@ class FlashcardsDeluxeImporter(TextImporter):
                 notes.append(note)
         except (csv.Error), e:
             log.append(_("Aborted: %s") % str(e))
+
+        newTags = ", ".join(sorted(self.newTags))
+        log.append("Tags used: {0}.".format(newTags))
 
         self.log = log
         self.ignored = ignored
