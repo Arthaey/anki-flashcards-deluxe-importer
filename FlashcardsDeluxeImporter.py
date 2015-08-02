@@ -5,6 +5,7 @@
 
 # TODO:
 # - prompt user for tag mapping
+# - *interactively* prompt user for tag mapping
 # - dynamically determine the number of fields for the model
 # - check whether the Note Id addon is actually in use
 
@@ -52,7 +53,7 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.lines = None
         self.fileobj = None
         self.delimiter = "\t"
-        self.tagsToAdd = ["FCD"]
+        self.tagsToAdd = ["~import::FCD"]
 
         # specific to FlashcardsDeluxeImporter
         self.cardStats = {}
