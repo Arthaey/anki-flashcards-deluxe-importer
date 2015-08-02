@@ -146,6 +146,7 @@ class FlashcardsDeluxeImporter(TextImporter):
     def _addTag(self, tags, tag):
         if tag and tag.strip():
             tag = RENAME_TAGS.get(tag.lower(), tag.lower())
+        if tag:
             tags.append(tag)
 
     # Returns the replaced text (if neeeded) and whether text was changed.
@@ -217,15 +218,16 @@ class FlashcardsDeluxeImporter(TextImporter):
         card.reps = stats.reviewCount
         card.lapses = stats.lapses
 
-        self._checkLeech(card, mw.col.sched._lapseConf(card), suspendIds)
+        if not card.due:
+            self.log.append("Card {0} had no due date; due now.".format(card.id))
 
         # queue types: 0=new/cram, 1=lrn, 2=rev, 3=day lrn, -1=suspended, -2=buried
         # revlog types: 0=lrn, 1=rev, 2=relrn, 3=cram
         # FIXME: Cards aren't going to the new or learning queues. Why?
-        if stats.pending: # new
+        if stats.pending or not card.due: # new
             card.type = 0
             card.queue = 0
-            card.due = card.id
+            card.due = 0
         elif stats.new: # learning
             card.type = 1
             card.queue = 1
@@ -234,6 +236,8 @@ class FlashcardsDeluxeImporter(TextImporter):
             card.queue = 2
         elif stats.excluded: # suspended
             suspendIds.add(card.id)
+
+        self._checkLeech(card, mw.col.sched._lapseConf(card), suspendIds)
 
     def _checkLeech(self, card, lapseConf, suspendIds):
         lf = lapseConf["leechFails"]
