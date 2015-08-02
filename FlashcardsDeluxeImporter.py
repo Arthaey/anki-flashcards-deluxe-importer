@@ -1,4 +1,7 @@
 # vim: set fileencoding=utf-8 :
+# See github page to report issues or to contribute:
+# https://github.com/Arthaey/anki-flashcards-deluxe-importer
+
 
 # TODO:
 # - prompt user for tag mapping

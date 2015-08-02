@@ -1,3 +1,6 @@
+# See github page to report issues or to contribute:
+# https://github.com/Arthaey/anki-flashcards-deluxe-importer
+
 from anki.importing.noteimp import ForeignNote
 from statistics import Statistics
 

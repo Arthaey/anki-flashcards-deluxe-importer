@@ -1,3 +1,6 @@
+# See github page to report issues or to contribute:
+# https://github.com/Arthaey/anki-flashcards-deluxe-importer
+
 from anki.hooks import wrap
 from anki.lang import _
 
