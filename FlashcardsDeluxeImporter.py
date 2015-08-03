@@ -1,27 +1,12 @@
-# vim: set fileencoding=utf-8 :
+# -*- coding: utf-8 -*-
 # See github page to report issues or to contribute:
 # https://github.com/Arthaey/anki-flashcards-deluxe-importer
-
-
-# TODO:
-# - prompt user for tag mapping
-# - *interactively* prompt user for tag mapping
-# - dynamically determine the number of fields for the model
-# - check whether the Note Id addon is actually in use
 
 import csv
 from datetime import datetime
 import random
 import re
 import sys
-
-# Must happen before reload(sys).
-import pprint # DELETE
-pp = pprint.PrettyPrinter(indent = 2, stream=sys.stderr) # DELETE
-
-# Required so that utf-8 characters can be used in the source code.
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 from anki.hooks import runHook
 import anki.importing
