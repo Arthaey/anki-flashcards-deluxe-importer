@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # See github page to report issues or to contribute:
 # https://github.com/Arthaey/anki-flashcards-deluxe-importer
+#
+# Also available for Anki at https://ankiweb.net/shared/info/1356674785
 
 import csv
 from datetime import datetime

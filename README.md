@@ -11,7 +11,7 @@ add an additional set of tags to all cards imported.
 - "Basic (and reversed card)" model
 - "Cloze" model
 - Flashcards Deluxe deck exported as "Basic Text" with statistics
-- deck has columns: Text 1, Text 2, Text 3, Category 1, Category 2, Statistics 1,
+- deck has columns: Text 1, Text 2, Text 3, Category 1, Category 2, Statistics 1
 - [Add Note ID](https://ankiweb.net/shared/info/1672832404) add-on installed
 
 To customize the category-to-tag mapping, you must edit the source code. You can
@@ -26,7 +26,11 @@ database first!
 
 Post a
 [new issue on Github](https://github.com/Arthaey/anki-flashcards-deluxe-importer/issues/new)
-(or make a pull request!).
+(or make a pull request!). You can also write a review or ask questions on the
+[Anki website for shared add-ons](https://ankiweb.net/shared/info/1356674785).
+
+[My other Anki add-ons](https://github.com/search?q=user%3AArthaey+anki)
+are also on Github.
 
 # TODO:
 
