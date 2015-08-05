@@ -6,6 +6,7 @@
 
 import csv
 from datetime import datetime
+import os
 import random
 import re
 import sys
@@ -23,12 +24,7 @@ from flashcards_deluxe_importer.statistics import Statistics
 
 SECONDS_PER_DAY = 60*60*24
 
-RENAME_TAGS = {
-    "phrases": "español::frases",
-    "sentences": "español::oraciones",
-    "vocabulary": "español::vocabulario",
-    "medical": "topics::medical",
-}
+RENAME_TAGS_FILENAME = "_flashcards_deluxe_importer_rename_tags.csv"
 
 class FlashcardsDeluxeImporter(TextImporter):
 
@@ -37,6 +33,7 @@ class FlashcardsDeluxeImporter(TextImporter):
 
     def __init__(self, *args):
         TextImporter.__init__(self, *args)
+        self.log = []
         self.lines = None
         self.fileobj = None
         self.delimiter = "\t"
@@ -48,6 +45,14 @@ class FlashcardsDeluxeImporter(TextImporter):
         self.newNoteIds = []
         self.clozeNoteIds = []
         self.newTags = set([])
+
+        # set up renaming tags map
+        self.renameTags = {}
+        renameTagsFilename = os.path.join(self.col.media.dir(), RENAME_TAGS_FILENAME)
+        with open(renameTagsFilename, "rb") as renameTagsFile:
+            reader = csv.reader(renameTagsFile, delimiter="\t", doublequote=True)
+            for row in reader:
+                self.renameTags[row[0]] = row[1]
 
     def run(self):
         # Always use the basic/reversed model, regardless of the current model.
@@ -123,9 +128,9 @@ class FlashcardsDeluxeImporter(TextImporter):
             log.append(_("Aborted: %s") % str(e))
 
         newTags = ", ".join(sorted(self.newTags))
-        log.append("Tags used: {0}.".format(newTags))
+        log.append(u"Tags used: {0}.".format(newTags))
 
-        self.log = log
+        self.log.extend(log)
         self.ignored = ignored
         self.fileobj.close()
         return notes
@@ -137,7 +142,7 @@ class FlashcardsDeluxeImporter(TextImporter):
 
     def _addTag(self, tags, tag):
         if tag and tag.strip():
-            tag = RENAME_TAGS.get(tag.lower(), tag.lower())
+            tag = self.renameTags.get(tag.lower(), tag.lower())
         if tag:
             tags.append(tag)
 
