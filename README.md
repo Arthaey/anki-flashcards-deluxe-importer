@@ -1,5 +1,7 @@
 # Description
 
+**Anki download ID: `1356674785`**
+
 Anki add-on to import exported decks from [Flashcards Deluxe](http://flashcardsdeluxe.com).
 
 It preserves due dates for cards, turns text in &lt;b&gt; or &lt;u&lt; tags
