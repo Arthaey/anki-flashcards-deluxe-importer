@@ -87,7 +87,7 @@ class FlashcardsDeluxeImporter(TextImporter):
         try:
             for row in reader:
                 lineNum += 1
-                id = "Note #{0} imported at {1}".format(lineNum, now)
+                id = u"Note #{0} imported at {1}".format(lineNum, now)
 
                 row = {k: unicode(v, "utf-8") if v else u"" for k,v in row.iteritems()}
                 front = row.get("Text 1", "")
@@ -99,13 +99,14 @@ class FlashcardsDeluxeImporter(TextImporter):
                 hint = self._handleNewlines(hint)
 
                 if hint and hint.strip():
-                    front += "\n<div class='extra'>{0}</div>".format(hint)
+                    front += u"\n<div class='extra'>{0}</div>".format(hint)
 
                 tags = []
                 self._addTag(tags, row.get("Category 1", ""))
                 self._addTag(tags, row.get("Category 2", ""))
                 self.newTags.update(tags)
 
+                stats = None
                 statsString = row["Statistics 1"]
                 if statsString:
                     stats = Statistics.parse(statsString)
@@ -169,7 +170,14 @@ class FlashcardsDeluxeImporter(TextImporter):
 
         id, guid, mid, time, usn, tags, fieldsStr, a, b, c, d = superData
         fields = fieldsStr.split("\x1f")
-        noteId, front, back, citation = fields
+        if len(fields) >= 4:
+            noteId   = fields[0]
+            front    = fields[1]
+            back     = fields[2]
+            citation = fields[3]
+        else:
+            self.log.append(u"Could not import: {0}".format(fields))
+            return None
 
         self.newNoteIds.append(id)
 
@@ -210,7 +218,7 @@ class FlashcardsDeluxeImporter(TextImporter):
         card.lapses = stats.lapses
 
         if not card.due:
-            self.log.append("Card {0} had no due date; due now.".format(card.id))
+            self.log.append(u"Card {0} had no due date; due now.".format(card.id))
 
         # queue types: 0=new/cram, 1=lrn, 2=rev, 3=day lrn, -1=suspended, -2=buried
         # revlog types: 0=lrn, 1=rev, 2=relrn, 3=cram
