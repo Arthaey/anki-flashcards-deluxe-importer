@@ -49,10 +49,11 @@ class FlashcardsDeluxeImporter(TextImporter):
         # set up renaming tags map
         self.renameTags = {}
         renameTagsFilename = os.path.join(self.col.media.dir(), RENAME_TAGS_FILENAME)
-        with open(renameTagsFilename, "rb") as renameTagsFile:
-            reader = csv.reader(renameTagsFile, delimiter="\t", doublequote=True)
-            for row in reader:
-                self.renameTags[row[0]] = row[1]
+        if os.path.exists(renameTagsFilename):
+            with open(renameTagsFilename, "rb") as renameTagsFile:
+                reader = csv.reader(renameTagsFile, delimiter="\t", doublequote=True)
+                for row in reader:
+                    self.renameTags[row[0]] = row[1]
 
     def run(self):
         # Always use the basic/reversed model, regardless of the current model.
