@@ -14,9 +14,10 @@ add an additional set of tags to all cards imported.
 - deck has columns: Text 1, Text 2, Text 3, Category 1, Category 2, Statistics 1
 - [Add Note ID](https://ankiweb.net/shared/info/1672832404) add-on installed
 
-To customize the category-to-tag mapping, you must edit the source code. You can
-find this from the Anki menu
-*Tools &gt; Add-ons &gt; FlashcardsDeluxeImporter &gt; Edit..*.
+To customize the category-to-tag mapping, create a CSV file mapping the
+Category 1 and Category 2 columns of your Flashcards Deluxe deck to the Anki
+tags you want. The CSV file should put all values in double quotes, and use tabs
+to separate the two columns.
 
 # Support
 
